@@ -525,7 +525,7 @@ namespace Barotrauma
                 {
                     using (MD5 tempMd5 = MD5.Create())
                     {
-                        filePaths = filePaths.OrderBy(f => ToolBox.StringToUInt32Hash(f.CleanUpPathCrossPlatform(true), tempMd5)).ToList();
+                        filePaths = filePaths.OrderBy(f => ToolBox.StringToUInt32Hash(f.CleanUpPathCrossPlatform(true).ToLowerInvariant(), tempMd5)).ToList();
                     }
                 }
 
