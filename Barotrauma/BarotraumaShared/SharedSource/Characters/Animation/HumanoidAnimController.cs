@@ -1854,6 +1854,7 @@ namespace Barotrauma
 
         private void HandIK(Limb hand, Vector2 pos, float force = 1.0f)
         {
+            if (this is null) { return; }
             if (shoulder == null) { return; }
             Vector2 shoulderPos = shoulder.WorldAnchorA;
 
