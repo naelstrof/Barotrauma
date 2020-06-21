@@ -869,6 +869,7 @@ namespace Barotrauma
         /// <param name="pullFromCenter">if false, force is applied to the position of pullJoint</param>
         protected void MoveLimb(Limb limb, Vector2 pos, float amount, bool pullFromCenter = false)
         {
+            if (limb==null) { return; }
             limb.MoveToPos(pos, amount, pullFromCenter);
         }
                 

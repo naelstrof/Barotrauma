@@ -507,19 +507,20 @@ namespace Barotrauma
         {
             get
             {
-                if (character.IsHumanoid) { return false; }
+                //if (character.IsHumanoid) { return false; }
                 if (this == character.AnimController.MainLimb) { return false; }
                 if (character.AnimController.CanWalk)
                 {
                     switch (type)
                     {
                         case LimbType.LeftFoot:
-                        case LimbType.RightFoot:
                         case LimbType.LeftLeg:
-                        case LimbType.RightLeg:
                         case LimbType.LeftThigh:
-                        case LimbType.RightThigh:
                         case LimbType.Legs:
+                            return true;
+                        case LimbType.RightFoot:
+                        case LimbType.RightLeg:
+                        case LimbType.RightThigh:
                         case LimbType.Waist:
                             return false;
                     }

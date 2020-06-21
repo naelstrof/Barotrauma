@@ -1142,18 +1142,16 @@ namespace Barotrauma
 
             if (!character.IsKeyDown(InputType.Aim) || Math.Abs(movement.Y) > 0.01f)
             {
-                MoveLimb(leftHand,
-                    new Vector2(handPos.X - ladderSimSize.X * 0.5f,
-                    (slide ? handPos.Y : MathUtils.Round(handPos.Y - stepHeight, stepHeight * 2.0f) + stepHeight) + ladderSimPos.Y),
-                    5.2f); ;
-
                 MoveLimb(rightHand,
                     new Vector2(slide ? handPos.X + ladderSimSize.X * 0.5f : handPos.X,
                     (slide ? handPos.Y : MathUtils.Round(handPos.Y, stepHeight * 2.0f)) + ladderSimPos.Y),
                     5.2f);
-
-                leftHand.body.ApplyTorque(Dir * 2.0f);
-                rightHand.body.ApplyTorque(Dir * 2.0f);
+                rightHand?.body.ApplyTorque(Dir * 2.0f);
+                MoveLimb(leftHand,
+                    new Vector2(handPos.X - ladderSimSize.X * 0.5f,
+                    (slide ? handPos.Y : MathUtils.Round(handPos.Y - stepHeight, stepHeight * 2.0f) + stepHeight) + ladderSimPos.Y),
+                    5.2f);
+                leftHand?.body.ApplyTorque(Dir * 2.0f);
             }
 
             Vector2 footPos = new Vector2(
@@ -1179,15 +1177,17 @@ namespace Barotrauma
                     float prevRightFootPos = MathUtils.Round(prevFootPos, stepHeight * 2.0f);
                     MoveLimb(rightFoot, new Vector2(footPos.X, rightFootPos + ladderSimPos.Y), 15.5f, true);
 #if CLIENT
-                    if (Math.Abs(leftFootPos - prevLeftFootPos) > stepHeight && leftFoot.LastImpactSoundTime < Timing.TotalTime - Limb.SoundInterval)
-                    {
-                        SoundPlayer.PlaySound("footstep_armor_heavy", leftFoot.WorldPosition, hullGuess: currentHull);
-                        leftFoot.LastImpactSoundTime = (float)Timing.TotalTime;
+                    if (leftFoot != null) {
+                        if (Math.Abs(leftFootPos - prevLeftFootPos) > stepHeight && leftFoot.LastImpactSoundTime < Timing.TotalTime - Limb.SoundInterval) {
+                            SoundPlayer.PlaySound("footstep_armor_heavy", leftFoot.WorldPosition, hullGuess: currentHull);
+                            leftFoot.LastImpactSoundTime = (float)Timing.TotalTime;
+                        }
                     }
-                    if (Math.Abs(rightFootPos - prevRightFootPos) > stepHeight && rightFoot.LastImpactSoundTime < Timing.TotalTime - Limb.SoundInterval)
-                    {
-                        SoundPlayer.PlaySound("footstep_armor_heavy", rightFoot.WorldPosition, hullGuess: currentHull);
-                        rightFoot.LastImpactSoundTime = (float)Timing.TotalTime;
+                    if (rightFoot != null) {
+                        if (Math.Abs(rightFootPos - prevRightFootPos) > stepHeight && rightFoot.LastImpactSoundTime < Timing.TotalTime - Limb.SoundInterval) {
+                            SoundPlayer.PlaySound("footstep_armor_heavy", rightFoot.WorldPosition, hullGuess: currentHull);
+                            rightFoot.LastImpactSoundTime = (float)Timing.TotalTime;
+                        }
                     }
 #endif
                     prevFootPos = footPos.Y;
@@ -1197,8 +1197,8 @@ namespace Barotrauma
                 Limb leftLeg = GetLimb(LimbType.LeftLeg);
                 Limb rightLeg = GetLimb(LimbType.RightLeg);
 
-                leftLeg.body.ApplyTorque(Dir * -8.0f);
-                rightLeg.body.ApplyTorque(Dir * -8.0f);
+                leftLeg?.body.ApplyTorque(Dir * -8.0f);
+                rightLeg?.body.ApplyTorque(Dir * -8.0f);
             }
 
             float movementFactor = (handPos.Y / stepHeight) * (float)Math.PI;
@@ -1207,6 +1207,10 @@ namespace Barotrauma
             Vector2 subSpeed = currentHull != null || character.SelectedConstruction.Submarine == null
                 ? Vector2.Zero : character.SelectedConstruction.Submarine.Velocity;
 
+            // Hard to climb with no hands...
+            if (movement.Y > 0) {
+                movementFactor *= (leftHand == null ? 0.8f : 1f) * (rightHand == null ? 0.8f : 1f);
+            }
             Vector2 climbForce = new Vector2(0.0f, movement.Y + 0.3f) * movementFactor;
             if (character.SimPosition.Y > ladderSimPos.Y) { climbForce.Y = Math.Min(0.0f, climbForce.Y); }
 
@@ -1512,13 +1516,19 @@ namespace Barotrauma
             else
             {
                 //only grab with one hand when swimming
-                leftHand.Disabled = true;
-                if (!inWater) rightHand.Disabled = true;
+                if (leftHand != null) {
+                    leftHand.Disabled = true;
+                }
+                if (!inWater || leftHand == null) {
+                    if (rightHand != null) {
+                        rightHand.Disabled = true;
+                    }
+                }
 
                 for (int i = 0; i < 2; i++)
                 {
                     Limb targetLimb = target.AnimController.GetLimb(LimbType.Torso);
-                    if (i == 0)
+                    if (i == 0 && leftHand != null)
                     {
                         if (!targetLeftHand.IsSevered)
                         {
@@ -1529,7 +1539,7 @@ namespace Barotrauma
                             targetLimb = targetRightHand;
                         }
                     }
-                    else
+                    else if (rightHand != null)
                     {
                         if (!targetRightHand.IsSevered)
                         {
@@ -1542,6 +1552,11 @@ namespace Barotrauma
                     }
 
                     Limb pullLimb = i == 0 ? leftHand : rightHand;
+
+                    // No hand!
+                    if (pullLimb == null) {
+                        continue;
+                    }
 
                     if (GameMain.NetworkMember == null || !GameMain.NetworkMember.IsClient)
                     {
@@ -1570,7 +1585,9 @@ namespace Barotrauma
                     }
 
                     //only pull with one hand when swimming
-                    if (i > 0 && inWater) continue;
+                    if (leftHand != null && rightHand != null) {
+                        if (i > 0 && inWater) continue;
+                    }
                     
                     Vector2 diff = ConvertUnits.ToSimUnits(targetLimb.WorldPosition - pullLimb.WorldPosition);
 
@@ -1662,6 +1679,9 @@ namespace Barotrauma
             for (int i = 0; i < 2; i++)
             {
                 Limb pullLimb = (i == 0) ? GetLimb(LimbType.LeftHand) : GetLimb(LimbType.RightHand);
+                if (pullLimb == null) {
+                    continue;
+                }
 
                 pullLimb.Disabled = true;
 
@@ -1962,13 +1982,17 @@ namespace Barotrauma
                 handSimPos -= character.Submarine.SimPosition;
             }
 
-            leftHand.Disabled = true;
-            leftHand.PullJointEnabled = true;
-            leftHand.PullJointWorldAnchorB = handSimPos;
+            if (leftHand != null) {
+                leftHand.Disabled = true;
+                leftHand.PullJointEnabled = true;
+                leftHand.PullJointWorldAnchorB = handSimPos;
+            }
 
-            rightHand.Disabled = true;
-            rightHand.PullJointEnabled = true;
-            rightHand.PullJointWorldAnchorB = handSimPos;
+            if (rightHand != null) {
+                rightHand.Disabled = true;
+                rightHand.PullJointEnabled = true;
+                rightHand.PullJointWorldAnchorB = handSimPos;
+            }
         }
 
         public override void Flip()
