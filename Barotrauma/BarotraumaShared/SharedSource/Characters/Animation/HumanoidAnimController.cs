@@ -1307,7 +1307,8 @@ namespace Barotrauma
         private void UpdateCPR(float deltaTime)
         {
             if (character.SelectedCharacter == null || 
-                (!character.SelectedCharacter.IsUnconscious && !character.SelectedCharacter.IsDead && character.SelectedCharacter.Stun <= 0.0f))
+                (!character.SelectedCharacter.IsUnconscious && !character.SelectedCharacter.IsDead && character.SelectedCharacter.Stun <= 0.0f)
+                || (GetLimb(LimbType.LeftHand) == null && GetLimb(LimbType.RightHand) == null))
             {
                 Anim = Animation.None;
                 return;
@@ -1446,6 +1447,11 @@ namespace Barotrauma
             Limb torso = GetLimb(LimbType.Torso);
             Limb leftHand = GetLimb(LimbType.LeftHand);
             Limb rightHand = GetLimb(LimbType.RightHand);
+
+            if (leftHand == null && rightHand == null) {
+                character.DeselectCharacter();
+                return;
+            }
 
             Limb targetLeftHand = target.AnimController.GetLimb(LimbType.LeftHand);
             if (targetLeftHand == null) targetLeftHand = target.AnimController.GetLimb(LimbType.Torso);
