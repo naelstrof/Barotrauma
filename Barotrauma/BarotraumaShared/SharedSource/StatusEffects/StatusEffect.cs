@@ -721,6 +721,9 @@ namespace Barotrauma
                 for (int i = 0; i < useItemCount; i++)
                 {
                     if (item.Removed) continue;
+                    if (type == ActionType.OnImpact) {
+                        item.ApplyStatusEffects(type, 1f, targetCharacter, targets.FirstOrDefault(t => t is Limb) as Limb);
+                    }
                     item.Use(deltaTime, targetCharacter, targets.FirstOrDefault(t => t is Limb) as Limb);
                 }
             }
