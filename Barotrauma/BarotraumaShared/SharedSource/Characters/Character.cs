@@ -2757,6 +2757,8 @@ namespace Barotrauma
                 }
                 if (severed)
                 {
+                    joint.LimbA.ApplyStatusEffects(ActionType.OnSevered, 1.0f);
+                    joint.LimbB.ApplyStatusEffects(ActionType.OnSevered, 1.0f);
                     Limb otherLimb = joint.LimbA == targetLimb ? joint.LimbB : joint.LimbA;
                     otherLimb.body.ApplyLinearImpulse(targetLimb.LinearVelocity * targetLimb.Mass);
                 }
@@ -2768,7 +2770,6 @@ namespace Barotrauma
                     enemyAI.ReevaluateAttacks();
                 }
                 ApplyStatusEffects(ActionType.OnSevered, 1.0f);
-                targetLimb.ApplyStatusEffects(ActionType.OnSevered, 1.0f);
             }
         }
 
