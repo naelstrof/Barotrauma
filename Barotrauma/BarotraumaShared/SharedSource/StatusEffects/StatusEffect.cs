@@ -161,6 +161,7 @@ namespace Barotrauma
         private readonly int useItemCount;
 
         private readonly bool removeItem, removeCharacter;
+        private readonly bool regenerateCharacter;
 
         public readonly ActionType type = ActionType.OnActive;
 
@@ -362,6 +363,9 @@ namespace Barotrauma
                     case "remove":
                     case "removeitem":
                         removeItem = true;
+                        break;
+                    case "regeneratecharacter":
+                        regenerateCharacter = true;
                         break;
                     case "removecharacter":
                         removeCharacter = true;
@@ -740,6 +744,17 @@ namespace Barotrauma
                 foreach (var target in targets)
                 {
                     if (target is Character character) { Entity.Spawner?.AddToRemoveQueue(character); }
+                }
+            }
+            if (regenerateCharacter)
+            {
+                foreach (var target in targets)
+                {
+                    if (target is Character character) {
+                        var pos = character.WorldPosition;
+                        character.AnimController.Recreate();
+                        character.TeleportTo(pos);
+                    }
                 }
             }
 
