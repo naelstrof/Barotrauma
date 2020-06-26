@@ -341,17 +341,8 @@ namespace Barotrauma
         /// <summary>
         /// Call this to create the ragdoll from the RagdollParams.
         /// </summary>
-        public virtual void Recreate(RagdollParams ragdollParams = null, Limb limbToRegenerate = null)
+        public virtual void Recreate(RagdollParams ragdollParams = null)
         {
-            HashSet<Tuple<int, Vector2>> severedLimbs = new HashSet<Tuple<int, Vector2>>();
-            if (limbToRegenerate != null) {
-                for (int i = 0; i < limbs.Length; i++) {
-                    Limb l = limbs[i];
-                    if (l.IsSevered && ConsolidateType(l.type) != ConsolidateType(limbToRegenerate.type)) {
-                        severedLimbs.Add(new Tuple<int, Vector2>(i, l.SimPosition));
-                    }
-                }
-            }
             
             if (IsFlipped)
             {
@@ -413,16 +404,6 @@ namespace Barotrauma
                     }
                 }
             }
-            // Re-sever the limbs!
-            foreach(Tuple<int,Vector2> t in severedLimbs) {
-                limbs[t.Item1].IsSevered = true;
-                foreach(LimbJoint j in LimbJoints) {
-                    if (j.CanBeSevered && (j.LimbA == limbs[t.Item1] || j.LimbB == limbs[t.Item1])) {
-                        j.IsSevered = true;
-                    }
-                }
-                limbs[t.Item1].body.TeleportTo(t.Item2);
-            }
         }
 
         public Ragdoll(Character character, string seed, RagdollParams ragdollParams = null)
@@ -481,27 +462,6 @@ namespace Barotrauma
 
             UpdateCollisionCategories();
             SetInitialLimbPositions();
-        }
-        private LimbType ConsolidateType(LimbType type) {
-            switch (type) {
-                case LimbType.RightArm:
-                case LimbType.RightHand:
-                case LimbType.RightForearm:
-                    return LimbType.RightArm;
-                case LimbType.LeftArm:
-                case LimbType.LeftHand:
-                case LimbType.LeftForearm:
-                    return LimbType.LeftArm;
-                case LimbType.LeftFoot:
-                case LimbType.LeftLeg:
-                case LimbType.LeftThigh:
-                    return LimbType.LeftLeg;
-                case LimbType.RightFoot:
-                case LimbType.RightLeg:
-                case LimbType.RightThigh:
-                    return LimbType.RightLeg;
-                default: return type;
-            }
         }
         /*private void RegenerateLimb(LimbType type) {
             type = ConsolidateType(type);
@@ -849,6 +809,8 @@ namespace Barotrauma
                 return false;
             }
 
+            limbJoint.LimbA.ApplyStatusEffects(ActionType.OnSevered, 1.0f);
+            limbJoint.LimbB.ApplyStatusEffects(ActionType.OnSevered, 1.0f);
             limbJoint.IsSevered = true;
             limbJoint.Enabled = false;
 

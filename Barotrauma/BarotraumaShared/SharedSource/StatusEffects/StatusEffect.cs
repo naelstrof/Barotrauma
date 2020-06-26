@@ -766,9 +766,9 @@ namespace Barotrauma
             {
                 foreach (var target in targets)
                 {
-                    if (target is Character character) {
+                    if (target is Character character && character.AnimController is HumanoidAnimController) {
                         var pos = character.WorldPosition;
-                        character.AnimController.Recreate(null, targets.FirstOrDefault(t=>t is Limb) as Limb);
+                        (character.AnimController as HumanoidAnimController).Recreate(null, targets.FirstOrDefault(t=>t is Limb) as Limb);
                         character.TeleportTo(pos);
                     }
                 }

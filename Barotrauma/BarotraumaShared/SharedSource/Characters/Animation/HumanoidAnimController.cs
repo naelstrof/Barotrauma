@@ -226,10 +226,59 @@ namespace Barotrauma
             // TODO: load from the character info file?
             movementLerp = RagdollParams.MainElement.GetAttributeFloat("movementlerp", 0.4f);
         }
+        private LimbType ConsolidateType(LimbType type) {
+            switch (type) {
+                case LimbType.RightArm:
+                case LimbType.RightHand:
+                case LimbType.RightForearm:
+                    return LimbType.RightArm;
+                case LimbType.LeftArm:
+                case LimbType.LeftHand:
+                case LimbType.LeftForearm:
+                    return LimbType.LeftArm;
+                case LimbType.LeftFoot:
+                case LimbType.LeftLeg:
+                case LimbType.LeftThigh:
+                    return LimbType.LeftLeg;
+                case LimbType.RightFoot:
+                case LimbType.RightLeg:
+                case LimbType.RightThigh:
+                    return LimbType.RightLeg;
+                default: return type;
+            }
+        }
 
-        public override void Recreate(RagdollParams ragdollParams, Limb limbToRegenerate = null)
+        public void Recreate(RagdollParams ragdollParams, Limb limbToRegenerate = null)
         {
-            base.Recreate(ragdollParams, limbToRegenerate);
+            HashSet<Tuple<int, Vector2>> severedLimbs = new HashSet<Tuple<int, Vector2>>();
+            if (limbToRegenerate != null) {
+                for (int i = 0; i < Limbs.Length; i++) {
+                    Limb l = Limbs[i];
+                    if (l.IsSevered && ConsolidateType(l.type) != ConsolidateType(limbToRegenerate.type)) {
+                        severedLimbs.Add(new Tuple<int, Vector2>(i, l.SimPosition));
+                    }
+                }
+            }
+
+            base.Recreate(ragdollParams);
+
+            CalculateArmLengths();
+            CalculateLegLengths();
+
+            // Re-sever the limbs!
+            foreach(Tuple<int,Vector2> t in severedLimbs) {
+                Limbs[t.Item1].IsSevered = true;
+                foreach(LimbJoint j in LimbJoints) {
+                    if (j.CanBeSevered && (j.LimbA == Limbs[t.Item1] || j.LimbB == Limbs[t.Item1])) {
+                        j.IsSevered = true;
+                        j.Enabled = false;
+                    }
+                }
+                Limbs[t.Item1].body.TeleportTo(t.Item2);
+            }
+        }
+        public override void Recreate(RagdollParams ragdollParams) {
+            base.Recreate(ragdollParams);
 
             CalculateArmLengths();
             CalculateLegLengths();
