@@ -341,8 +341,18 @@ namespace Barotrauma
         /// <summary>
         /// Call this to create the ragdoll from the RagdollParams.
         /// </summary>
-        public virtual void Recreate(RagdollParams ragdollParams = null)
+        public virtual void Recreate(RagdollParams ragdollParams = null, Limb limbToRegenerate = null)
         {
+            HashSet<Tuple<int, Vector2>> severedLimbs = new HashSet<Tuple<int, Vector2>>();
+            if (limbToRegenerate != null) {
+                for (int i = 0; i < limbs.Length; i++) {
+                    Limb l = limbs[i];
+                    if (l.IsSevered && ConsolidateType(l.type) != ConsolidateType(limbToRegenerate.type)) {
+                        severedLimbs.Add(new Tuple<int, Vector2>(i, l.SimPosition));
+                    }
+                }
+            }
+            
             if (IsFlipped)
             {
                 Flip();
@@ -403,6 +413,16 @@ namespace Barotrauma
                     }
                 }
             }
+            // Re-sever the limbs!
+            foreach(Tuple<int,Vector2> t in severedLimbs) {
+                limbs[t.Item1].IsSevered = true;
+                foreach(LimbJoint j in LimbJoints) {
+                    if (j.CanBeSevered && (j.LimbA == limbs[t.Item1] || j.LimbB == limbs[t.Item1])) {
+                        j.IsSevered = true;
+                    }
+                }
+                limbs[t.Item1].body.TeleportTo(t.Item2);
+            }
         }
 
         public Ragdoll(Character character, string seed, RagdollParams ragdollParams = null)
@@ -462,6 +482,99 @@ namespace Barotrauma
             UpdateCollisionCategories();
             SetInitialLimbPositions();
         }
+        private LimbType ConsolidateType(LimbType type) {
+            switch (type) {
+                case LimbType.RightArm:
+                case LimbType.RightHand:
+                case LimbType.RightForearm:
+                    return LimbType.RightArm;
+                case LimbType.LeftArm:
+                case LimbType.LeftHand:
+                case LimbType.LeftForearm:
+                    return LimbType.LeftArm;
+                case LimbType.LeftFoot:
+                case LimbType.LeftLeg:
+                case LimbType.LeftThigh:
+                    return LimbType.LeftLeg;
+                case LimbType.RightFoot:
+                case LimbType.RightLeg:
+                case LimbType.RightThigh:
+                    return LimbType.RightLeg;
+                default: return type;
+            }
+        }
+        /*private void RegenerateLimb(LimbType type) {
+            type = ConsolidateType(type);
+            if (IsFlipped)
+            {
+                Flip();
+            }
+            dir = Direction.Right;
+            // Create colliders -----
+            foreach (var cParams in RagdollParams.Colliders) {
+                // Check if the collider is part of the same limb we're trying to regenerate. ----
+                bool isTargetedLimb = true;
+                IEnumerable<XAttribute> attributes = cParams.OriginalElement.Attributes();
+                foreach (XAttribute attribute in attributes) {
+                    switch (attribute.Name.ToString()) {
+                        case "type":
+                            LimbType checkType = LimbType.None;
+                            Enum.TryParse(attribute.Value, true, out checkType);
+                            if (ConsolidateType(checkType) != type) {
+                                isTargetedLimb = false;
+                                break;
+                            }
+                            break;
+                        default: break;
+                    }
+                    if (isTargetedLimb == false) {
+                        break;
+                    }
+                }
+                if (isTargetedLimb == false) {
+                    continue;
+                }
+                // ------------------------------------------------------------------------------
+
+                if (!PhysicsBody.IsValidShape(cParams.Radius, cParams.Height, cParams.Width))
+                {
+                    DebugConsole.ThrowError("Invalid collider dimensions: " + cParams.Name);
+                    break; ;
+                }
+                var body = new PhysicsBody(cParams);
+                collider.Add(body);
+                body.UserData = character;
+                body.FarseerBody.OnCollision += OnLimbCollision;
+                if (collider.Count > 1)
+                {
+                    body.PhysEnabled = false;
+                }
+            }
+
+            // Create Limbs
+
+            if (limbs != null) {
+                foreach (var l in limbs) {
+                    if (ConsolidateType(l.type) == type) {
+                        l.Remove();
+                    }
+                }
+            }
+            limbDictionary = new Dictionary<LimbType, Limb>();
+            limbs = new Limb[RagdollParams.Limbs.Count];
+            foreach (LimbParams l in RagdollParams.Limbs) {
+                if (ConsolidateType(l.Type) != type) {
+                    continue;
+                }
+                AddLimb(l));
+            }
+            SetupDrawOrder();
+
+            // Create Joints
+
+            CreateJoints();
+            UpdateCollisionCategories();
+        }*/
 
         private void SetInitialLimbPositions()
         {

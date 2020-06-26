@@ -162,6 +162,7 @@ namespace Barotrauma
 
         private readonly bool removeItem, removeCharacter;
         private readonly bool regenerateCharacter;
+        private readonly bool regenerateLimb;
 
         public readonly ActionType type = ActionType.OnActive;
 
@@ -366,6 +367,9 @@ namespace Barotrauma
                         break;
                     case "regeneratecharacter":
                         regenerateCharacter = true;
+                        break;
+                    case "regeneratelimb":
+                        regenerateLimb = true;
                         break;
                     case "removecharacter":
                         removeCharacter = true;
@@ -753,6 +757,18 @@ namespace Barotrauma
                     if (target is Character character) {
                         var pos = character.WorldPosition;
                         character.AnimController.Recreate();
+                        character.TeleportTo(pos);
+                    }
+                }
+            }
+
+            if (regenerateLimb)
+            {
+                foreach (var target in targets)
+                {
+                    if (target is Character character) {
+                        var pos = character.WorldPosition;
+                        character.AnimController.Recreate(null, targets.FirstOrDefault(t=>t is Limb) as Limb);
                         character.TeleportTo(pos);
                     }
                 }

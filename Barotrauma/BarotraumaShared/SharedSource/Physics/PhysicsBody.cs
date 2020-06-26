@@ -234,6 +234,9 @@ namespace Barotrauma
             get { return FarseerBody.Position; }
         }
 
+        public void TeleportTo(Vector2 position) {
+            FarseerBody.Position = position;
+        }
         public Vector2 Position
         {
             get { return ConvertUnits.ToDisplayUnits(FarseerBody.Position); }

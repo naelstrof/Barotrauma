@@ -227,9 +227,10 @@ namespace Barotrauma
             movementLerp = RagdollParams.MainElement.GetAttributeFloat("movementlerp", 0.4f);
         }
 
-        public override void Recreate(RagdollParams ragdollParams)
+        public override void Recreate(RagdollParams ragdollParams, Limb limbToRegenerate = null)
         {
-            base.Recreate(ragdollParams);
+            base.Recreate(ragdollParams, limbToRegenerate);
+
             CalculateArmLengths();
             CalculateLegLengths();
         }

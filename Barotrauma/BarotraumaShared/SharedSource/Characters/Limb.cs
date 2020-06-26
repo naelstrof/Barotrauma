@@ -517,7 +517,8 @@ namespace Barotrauma
                         case LimbType.LeftLeg:
                         case LimbType.LeftThigh:
                             if (ragdoll.GetLimb(LimbType.RightLeg) != null &&
-                                ragdoll.GetLimb(LimbType.RightThigh) != null) {
+                                ragdoll.GetLimb(LimbType.RightThigh) != null &&
+                                ragdoll.GetLimb(LimbType.RightFoot) != null) {
                                 return true;
                             }
                             return false;
@@ -527,7 +528,8 @@ namespace Barotrauma
                         case LimbType.RightLeg:
                         case LimbType.RightThigh:
                             if (ragdoll.GetLimb(LimbType.LeftLeg) != null &&
-                                ragdoll.GetLimb(LimbType.LeftThigh) != null) {
+                                ragdoll.GetLimb(LimbType.LeftThigh) != null && 
+                                ragdoll.GetLimb(LimbType.LeftFoot) != null) {
                                 return true;
                             }
                             return false;
